@@ -4,9 +4,10 @@ import { useState } from 'react'
 
 export default function Home() {
   const [text, setText] = useState('')
+  const [result, setResult] = useState<string>()
 
   const onClick = () => {
-    // メールをPOSTする
+    setResult('メールを送ってるよ……。')
     fetch('/api/mail', {
       method: 'POST',
       headers: {
@@ -17,6 +18,12 @@ export default function Home() {
         body: text,
       }),
     })
+      .then((res) => {
+        setResult('メールを送ったよ')
+      })
+      .catch((err) => {
+        setResult('メールを送るのに失敗したよ……。')
+      })
   }
 
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -33,8 +40,14 @@ export default function Home() {
       </Head>
       <main>
         <div className={`${styles.send}`}>
-          <textarea onChange={(e) => onChange(e)} />
-          <button onClick={() => onClick()}>めーるおくるよー</button>
+          {result === undefined ? (
+            <>
+              <textarea onChange={(e) => onChange(e)} />
+              <button onClick={() => onClick()}>めーるおくるよー</button>
+            </>
+          ) : (
+            <p>{result}</p>
+          )}
         </div>
       </main>
     </>
