@@ -1,10 +1,5 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createTransport } from 'nodemailer'
-
-type Data = {
-  name: string
-}
 
 const transporter = createTransport({
   service: process.env.MAIL_SERVICE,
@@ -15,15 +10,9 @@ const transporter = createTransport({
   },
 })
 
-//メールの内容
-const MailText = `
-  テストのメールです。
-  テストなので、返信不要です。
-  `
-
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse
 ) {
   const method = req.method
   switch (method) {
