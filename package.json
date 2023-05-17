@@ -1,5 +1,5 @@
 {
-  "name": "mail-send",
+  "name": "mail-send-test",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,8 +15,13 @@
     "eslint": "8.40.0",
     "eslint-config-next": "13.4.2",
     "next": "13.4.2",
+    "nodemailer": "6.9.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "sass": "^1.62.1",
     "typescript": "5.0.4"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.7"
   }
 }
