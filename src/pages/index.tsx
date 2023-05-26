@@ -1,33 +1,101 @@
 import Head from 'next/head'
 import styles from '@/styles/Home.module.scss'
-import { useState } from 'react'
+import { useState, useCallback, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
+import { useDropzone } from 'react-dropzone'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+
+const SELECT_CHOICE_LIST = [
+  {
+    id: 1,
+    name: '選択肢1',
+  },
+  {
+    id: 2,
+    name: '選択肢2',
+  },
+  {
+    id: 3,
+    name: '選択肢3',
+  },
+] as const
+
+type SelectChoiceId = (typeof SELECT_CHOICE_LIST)[number]['id']
+
+const schema = z.object({
+  textarea: z.string().min(1, { message: '必須です' }),
+  select: z.custom<SelectChoiceId>(),
+  file: z.custom<File>().refine((file) => !file, {
+    message: '必須です',
+  }),
+})
+type Schema = z.infer<typeof schema>
 
 export default function Home() {
   const [text, setText] = useState('')
   const [result, setResult] = useState<string>()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<Schema>({
+    resolver: zodResolver(schema),
+    mode: 'onBlur',
+    defaultValues: {
+      select: 2,
+    },
+  })
+
+  const watchFile = watch('file')
+  const FileNamePreview = useMemo(() => {
+    if (!watchFile) {
+      return <></>
+    }
+
+    return (
+      <span className={styles.fileNamePreview}>
+        選択中のファイル: {watchFile.name}
+      </span>
+    )
+  }, [watchFile])
+
+  const onSubmit = (data: any) => {
+    console.log(data)
+  }
+
+  const onDrop = useCallback(
+    (acceptedFiles: File[]): void => {
+      setValue('file', acceptedFiles[0], { shouldValidate: true })
+    },
+    [setValue]
+  )
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
 
   const onClick = () => {
     setResult('メールを送ってるよ……。')
-    fetch('/api/mail', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        title: 'テストメール',
-        body: text,
-      }),
-    })
-      .then((res) => {
-        setResult('メールを送ったよ')
-      })
-      .catch((err) => {
-        setResult('メールを送るのに失敗したよ……。')
-      })
-  }
+    // fetch('/api/mail', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+    //     title: 'テストメール',
+    //     body: text,
+    //   }),
+    // })
+    //   .then((res) => {
+    //     setResult('メールを送ったよ')
+    //   })
+    //   .catch((err) => {
+    //     setResult('メールを送るのに失敗したよ……。')
+    //   })
+    // }
 
-  const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(e.target.value)
+    // const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    //   setText(e.target.value)
   }
 
   return (
@@ -41,10 +109,45 @@ export default function Home() {
       <main>
         <div className={`${styles.send}`}>
           {result === undefined ? (
-            <>
-              <textarea onChange={(e) => onChange(e)} />
-              <button onClick={() => onClick()}>めーるおくるよー</button>
-            </>
+            <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+              <div className={styles.formItem}>
+                <label htmlFor='select'>選択肢を選択</label>
+                <select {...register('select')} id='select'>
+                  {SELECT_CHOICE_LIST.map((choice) => (
+                    <option key={choice.id} value={choice.id}>
+                      {choice.name}
+                    </option>
+                  ))}
+                </select>
+                <p>{errors.select?.message}</p>
+              </div>
+              <div className={styles.formItem}>
+                <label htmlFor='file'>ファイルを選択</label>
+                <div {...getRootProps()} className={styles.dropzone}>
+                  <input {...getInputProps()} {...register('file')} id='file' />
+                  {isDragActive ? (
+                    <p>ここにドロップしてね</p>
+                  ) : (
+                    <p>ここにドラッグ＆ドロップでファイルをアップロード</p>
+                  )}
+                  {FileNamePreview}
+                </div>
+                <p>{errors.file?.message}</p>
+              </div>
+              <div className={styles.formItem}>
+                <label htmlFor='textarea'>本文</label>
+                <textarea id='textarea' {...register('textarea')} />
+                <p>{errors.textarea?.message}</p>
+              </div>
+              <button
+                type='submit'
+                onClick={(e) => {
+                  e.preventDefault
+                }}
+              >
+                メール送信！
+              </button>
+            </form>
           ) : (
             <p>{result}</p>
           )}

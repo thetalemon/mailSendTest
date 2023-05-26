@@ -1,21 +1,40 @@
 .send {
-  display: flex;
-  flex-direction: column;
-  margin: 40px auto;
-  gap: 24px;
-  max-width: 450px;
-  width: 100%;
+  .form {
+    display: flex;
+    flex-direction: column;
+    margin: 40px auto;
+    gap: 8px;
+    max-width: 450px;
+    width: 100%;
+    .formItem {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
-  textarea {
-    height: 8rem;
-  }
+    textarea {
+      height: 8rem;
+    }
+    .dropzone {
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      border: 1px solid black;
+      border-radius: 5px;
+      height: 180px;
+    }
 
-  button,
-  textarea {
-    border-radius: 4px;
-  }
+    button,
+    textarea {
+      border-radius: 4px;
+    }
 
-  button {
-    border: 1px solid black;
+    button {
+      border: 1px solid black;
+    }
+    p {
+      margin: 0;
+    }
   }
 }

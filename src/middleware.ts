@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 export const middleware = (req: NextRequest) => {
+  if (!process.env.BASIC_AUTH_USER || !process.env.BASIC_AUTH_PASS) {
+    return
+  }
   if (req.nextUrl.pathname.startsWith('/')) {
     const authorizationHeader = req.headers.get('authorization')
 
