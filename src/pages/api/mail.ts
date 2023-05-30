@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createTransport } from 'nodemailer'
+import { IncomingForm, Fields, Files } from 'formidable'
+import fs from 'fs'
 
 const transporter = createTransport({
   service: process.env.MAIL_SERVICE,
@@ -10,6 +12,32 @@ const transporter = createTransport({
   },
 })
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
+
+interface myFile extends File {
+  originalFilename: string
+  filepath: string
+}
+
+const parseForm = (
+  req: NextApiRequest
+): Promise<{ fields: Fields; files: Files }> => {
+  return new Promise((resolve, reject) => {
+    const form = new IncomingForm()
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve({ fields, files })
+      }
+    })
+  })
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -17,14 +45,27 @@ export default async function handler(
   const method = req.method
   switch (method) {
     case 'POST': {
-      console.log('POSTがきたよ')
-      const { title, body } = req.body
+      console.log('POSTがきました')
+      const data = await parseForm(req)
+      const file = data.files.file
+      if (Array.isArray(file) || file.originalFilename === null) {
+        res.status(500).end()
+        break
+      }
+
       try {
-        await transporter.sendMail({
+        transporter.sendMail({
           from: process.env.MAIL_FORM_USER,
           to: process.env.MAIL_TO_DEFAULT,
-          subject: title,
-          text: body,
+          subject: 'てすとだよ',
+          text: data.fields.textarea as string,
+          attachments: [
+            {
+              filename: file.originalFilename,
+              contentType: 'application/pdf',
+              content: fs.readFileSync(file.filepath),
+            },
+          ],
         })
         console.log(`メールを送信した気がします`)
         res.status(200).end()

@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import styles from '@/styles/Home.module.scss'
+import styles from '@/styles/index.module.scss'
 import { useState, useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useDropzone } from 'react-dropzone'
@@ -26,14 +26,26 @@ type SelectChoiceId = (typeof SELECT_CHOICE_LIST)[number]['id']
 const schema = z.object({
   textarea: z.string().min(1, { message: '必須です' }),
   select: z.custom<SelectChoiceId>(),
-  file: z.custom<File>().refine((file) => !file, {
+  file: z.custom<File>().refine((file) => file.name, {
     message: '必須です',
   }),
 })
+
 type Schema = z.infer<typeof schema>
 
+interface SchemaInterface {
+  [key: string]: string | number | Blob
+}
+
+interface CustomFormData extends FormData {
+  append<T extends string | Blob>(
+    name: keyof Schema,
+    value: T,
+    fileName?: string
+  ): void
+}
+
 export default function Home() {
-  const [text, setText] = useState('')
   const [result, setResult] = useState<string>()
   const {
     register,
@@ -62,10 +74,6 @@ export default function Home() {
     )
   }, [watchFile])
 
-  const onSubmit = (data: any) => {
-    console.log(data)
-  }
-
   const onDrop = useCallback(
     (acceptedFiles: File[]): void => {
       setValue('file', acceptedFiles[0], { shouldValidate: true })
@@ -74,28 +82,33 @@ export default function Home() {
   )
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
 
-  const onClick = () => {
+  const onSubmit = (data: Schema) => {
+    console.log(data)
     setResult('メールを送ってるよ……。')
-    // fetch('/api/mail', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     title: 'テストメール',
-    //     body: text,
-    //   }),
-    // })
-    //   .then((res) => {
-    //     setResult('メールを送ったよ')
-    //   })
-    //   .catch((err) => {
-    //     setResult('メールを送るのに失敗したよ……。')
-    //   })
-    // }
-
-    // const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    //   setText(e.target.value)
+    const formData = new FormData() as CustomFormData
+    Object.keys(data).forEach((key: string) => {
+      const subKey = key as keyof Schema
+      const d = data as SchemaInterface
+      const tmp = d[subKey]
+      if (typeof tmp === 'number') {
+        formData.append(subKey, String(tmp))
+      } else {
+        formData.append(subKey, tmp)
+      }
+    })
+    console.log(data)
+    fetch('/api/mail', {
+      method: 'POST',
+      body: formData,
+    })
+      .then((res) => {
+        setResult('メールを送ったよ')
+        console.log(res)
+      })
+      .catch((err) => {
+        setResult('メールを送るのに失敗したよ……。')
+        console.log(err)
+      })
   }
 
   return (
