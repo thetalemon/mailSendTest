@@ -5,21 +5,7 @@ import { useForm } from 'react-hook-form'
 import { useDropzone } from 'react-dropzone'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-
-const SELECT_CHOICE_LIST = [
-  {
-    id: 1,
-    name: '選択肢1',
-  },
-  {
-    id: 2,
-    name: '選択肢2',
-  },
-  {
-    id: 3,
-    name: '選択肢3',
-  },
-] as const
+import { SELECT_CHOICE_LIST } from '@/pages/constant/constant'
 
 type SelectChoiceId = (typeof SELECT_CHOICE_LIST)[number]['id']
 
@@ -43,6 +29,21 @@ interface CustomFormData extends FormData {
     value: T,
     fileName?: string
   ): void
+}
+
+const createFormDatata = (data: Schema) => {
+  const formData = new FormData() as CustomFormData
+  Object.keys(data).forEach((key: string) => {
+    const subKey = key as keyof Schema
+    const d = data as SchemaInterface
+    const tmp = d[subKey]
+    if (typeof tmp === 'number') {
+      formData.append(subKey, String(tmp))
+    } else {
+      formData.append(subKey, tmp)
+    }
+  })
+  return formData
 }
 
 export default function Home() {
@@ -80,23 +81,12 @@ export default function Home() {
     },
     [setValue]
   )
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
 
   const onSubmit = (data: Schema) => {
-    console.log(data)
     setResult('メールを送ってるよ……。')
-    const formData = new FormData() as CustomFormData
-    Object.keys(data).forEach((key: string) => {
-      const subKey = key as keyof Schema
-      const d = data as SchemaInterface
-      const tmp = d[subKey]
-      if (typeof tmp === 'number') {
-        formData.append(subKey, String(tmp))
-      } else {
-        formData.append(subKey, tmp)
-      }
-    })
-    console.log(data)
+    const formData = createFormDatata(data)
     fetch('/api/mail', {
       method: 'POST',
       body: formData,
