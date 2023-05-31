@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { createTransport } from 'nodemailer'
 import { IncomingForm, Fields, Files } from 'formidable'
 import fs from 'fs'
+import { SELECT_CHOICE_LIST } from '@/pages/constant/constant'
 
 const transporter = createTransport({
   service: process.env.MAIL_SERVICE,
@@ -16,11 +17,6 @@ export const config = {
   api: {
     bodyParser: false,
   },
-}
-
-interface myFile extends File {
-  originalFilename: string
-  filepath: string
 }
 
 const parseForm = (
@@ -38,6 +34,14 @@ const parseForm = (
   })
 }
 
+const createMessage = (textarea: string, select: string): string => {
+  return `
+  選択肢: ${
+    SELECT_CHOICE_LIST.filter((item) => item.id === Number(select))[0].name
+  }
+  ${textarea}`
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -48,7 +52,7 @@ export default async function handler(
       console.log('POSTがきました')
       const data = await parseForm(req)
       const file = data.files.file
-      if (Array.isArray(file) || file.originalFilename === null) {
+      if (!Array.isArray(file) || file[0].originalFilename === null) {
         res.status(500).end()
         break
       }
@@ -58,12 +62,15 @@ export default async function handler(
           from: process.env.MAIL_FORM_USER,
           to: process.env.MAIL_TO_DEFAULT,
           subject: 'てすとだよ',
-          text: data.fields.textarea as string,
+          text: createMessage(
+            data.fields.textarea as string,
+            data.fields.select as string
+          ),
           attachments: [
             {
-              filename: file.originalFilename,
+              filename: file[0].originalFilename,
               contentType: 'application/pdf',
-              content: fs.readFileSync(file.filepath),
+              content: fs.readFileSync(file[0].filepath),
             },
           ],
         })

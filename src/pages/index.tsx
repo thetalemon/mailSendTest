@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import styles from '@/styles/index.module.scss'
+import styles from './index.module.scss'
 import { useState, useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useDropzone } from 'react-dropzone'
@@ -12,8 +12,8 @@ type SelectChoiceId = (typeof SELECT_CHOICE_LIST)[number]['id']
 const schema = z.object({
   textarea: z.string().min(1, { message: '必須です' }),
   select: z.custom<SelectChoiceId>(),
-  file: z.custom<File>().refine((file) => file.name, {
-    message: '必須です',
+  file: z.custom<File>().refine((file) => file && file.name, {
+    message: 'pdfファイルは必須です',
   }),
 })
 
@@ -64,7 +64,7 @@ export default function Home() {
 
   const watchFile = watch('file')
   const FileNamePreview = useMemo(() => {
-    if (!watchFile) {
+    if (!watchFile || !watchFile.name) {
       return <></>
     }
 
@@ -82,7 +82,12 @@ export default function Home() {
     [setValue]
   )
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+    },
+  })
 
   const onSubmit = (data: Schema) => {
     setResult('メールを送ってるよ……。')
@@ -129,9 +134,9 @@ export default function Home() {
                 <div {...getRootProps()} className={styles.dropzone}>
                   <input {...getInputProps()} {...register('file')} id='file' />
                   {isDragActive ? (
-                    <p>ここにドロップしてね</p>
+                    <p>ここにドロップでpdfファイルをアップロード</p>
                   ) : (
-                    <p>ここにドラッグ＆ドロップでファイルをアップロード</p>
+                    <p>ここにドラッグ＆ドロップでpdfファイルをアップロード</p>
                   )}
                   {FileNamePreview}
                 </div>

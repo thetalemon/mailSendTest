@@ -5,7 +5,11 @@ export const middleware = (req: NextRequest) => {
   if (!process.env.BASIC_AUTH_USER || !process.env.BASIC_AUTH_PASS) {
     return
   }
-  if (req.nextUrl.pathname.startsWith('/')) {
+  if (
+    req.nextUrl.pathname.startsWith('/') &&
+    !req.nextUrl.pathname.startsWith('/api') &&
+    !req.nextUrl.pathname.startsWith('/public')
+  ) {
     const authorizationHeader = req.headers.get('authorization')
 
     if (authorizationHeader) {
